@@ -1,40 +1,50 @@
 import { useQuery } from "@tanstack/react-query";
 import ms from "ms";
-import Posts from "./Posts";
+import UserTabs from "./components/UserTabs";
 import { useState } from "react";
 
-const getData = () => {
-  return ["one", "two"];
-};
-
-const getDataP = () => {
-  console.log("data function called");
-  return new Promise((res, rej) => {
-    setTimeout(() => {
-      res(["one", "two"]);
-    }, ms("4s"));
-  });
-};
-
 function App() {
-  const [load, setLoad] = useState(false);
-  const { isLoading, data } = useQuery({
-    queryKey: ["data"],
-    queryFn: getData,
-    staleTime: ms("20s"),
+  const [userId, setUserId] = useState(0);
+  const [enabled, setEnabled] = useState(false);
+  const {
+    isLoading,
+    isInitialLoading,
+    data: user,
+    isSuccess,
+  } = useQuery({
+    queryKey: ["user", userId],
+    queryFn: () => {
+      return fetch(`https://jsonplaceholder.typicode.com/users/${userId}`).then(
+        (res) => res.json()
+      );
+    },
+    staleTime: ms("4s"),
+    enabled: enabled,
   });
+
+  const changeUser = (user) => {
+    setEnabled(true);
+    setUserId(user);
+  };
+
+  console.log(isInitialLoading);
+  console.log(isLoading);
+
   return (
-    <>
-      <h1 className="underline">Data</h1>
-      <ul>{data && data.map((d) => <li key={d}>{d}</li>)}</ul>
-      <button
-        onClick={() => setLoad(!load)}
-        className="bg-red-500 hovedr:bg-gray-300 rounded m-6 px-1 py-0.5 "
-      >
-        Load
-      </button>
-      {load && <Posts />}
-    </>
+    <div className="p-10">
+      <UserTabs userId={userId} setUserId={changeUser} />
+
+      <div className="my-4 p-4 rounded-lg border-[3px] border-black">
+        {isInitialLoading && isLoading && <p>Loading...</p>}
+        {isSuccess && (
+          <div>
+            <h2>{user.name}</h2>
+          </div>
+        )}
+      </div>
+
+      <div></div>
+    </div>
   );
 }
 
